@@ -1,0 +1,84 @@
+version: '3.8'
+
+services:
+
+  nextcloud-db:
+    image: mysql:latest
+    container_name: nextcloud-db
+    environment:
+      MYSQL_ROOT_PASSWORD: your-root-password
+      MYSQL_DATABASE: nextcloud
+      MYSQL_USER: nextcloud
+      MYSQL_PASSWORD: your-user-password
+    restart: always
+    volumes:
+      - ./db:/var/lib/mysql
+    networks:
+      - nextcloud-network
+
+  redis:
+    image: redis:alpine
+    container_name: my-redis-container
+    networks:
+      - nextcloud-network
+
+  nextcloud: #nextcloud_instance
+    image: nextcloud:latest
+    container_name: nextcloud
+    depends_on:
+      - nextcloud-db
+    ports:
+      - "8080:80"
+    volumes:
+      - ./data:/var/www/html/data
+      - ./config:/var/www/html/config
+      - ./apps:/var/www/html/custom_apps
+      #- ./config/config.php:/home/barbara/Downloads/First year/1° semester/HPCC/github/Cloud-Basic-2023/exam/config.php  # Mount custom config.php
+    environment:
+      - REDIS_HOST=redis
+    networks:
+      - nextcloud-network
+
+  nextcloud_users: #nextcloud_instance1
+    image: nextcloud:latest
+    container_name: nextcloud_users
+    depends_on:
+      - nextcloud-db
+    ports:
+      - "8081:80"
+    volumes:
+      - ./data:/var/www/html/data
+      - ./config1:/var/www/html/config
+      - ./apps1:/var/www/html/custom_apps
+    environment:
+      - REDIS_HOST=redis
+    networks:
+      - nextcloud-network
+
+  locust:
+    image: locustio/locust
+    ports:
+      - "8089:8089"
+    volumes:
+      - ./locust:/mnt/
+      # - ./locustfile.py:/mnt/locustfile.py
+    command: -f /mnt/locustfile.py --host http://nextcloud:80
+    networks:
+      - nextcloud-network
+
+  nginx:
+    image: nginx:latest
+    container_name: my-nginx-container #nextcloud_nginx
+    ports:
+      - "8083:80"  # Expose Nginx on port 80
+    volumes:
+      - ./nginx.conf:/var/www/html/nginx.conf:Z  # Mount your Nginx configuration file (at /etc/nginx/nginx.conf)
+    depends_on:
+      - nextcloud
+      - nextcloud_users
+    networks:
+      - nextcloud-network
+
+networks:
+  nextcloud-network:
+    driver: bridge
