@@ -148,3 +148,42 @@ locust:
     depends_on:
       - nextcloud
 ```
+## Nginx configuration file
+The configuration of Nginx is handled by both the docker-compose.yaml and the nginx.conf files. 
+The nginx.conf configuartion file's code are reported below
+```php
+upstream nextcloud_backend {
+        least_conn;
+        server nextcloud:80;
+    }
+
+    # Define the log format with upstream information
+    log_format upstreamlog '$remote_addr - $remote_user [$time_local] "$request" '
+                           'upstream_response_time $upstream_response_time msec $msec request_time $request_time '
+                           'upstream_addr $upstream_addr upstream_status $upstream_status';
+
+    server {
+        listen 80;
+        server_name localhost;
+
+        # Use the defined log format for access logs
+        access_log /var/log/nginx/access.log upstreamlog;
+
+        location / {
+            proxy_pass http://nextcloud_backend;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+            client_max_body_size 0; # Zero means no limit
+        }
+
+        # Nginx status page configuration
+        location /nginx_status {
+            stub_status on;
+            allow 127.0.0.1;        # Only allow access from localhost
+            allow 172.23.0.0/16;    # Allow access from the Docker network
+            deny all;               # Deny access to anyone else
+        }
+    }
+```
