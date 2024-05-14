@@ -313,4 +313,4 @@ The summary graphs are reported below
 The graphs reports that, even if some occasional failures happens, the system performance can be said to be the same for the first two cases. The log reports all the failures but the search for their causes can be preatty complicated. It is supposed that some of them may happen when some background task starts at the same time while some of them will fail even though no other tasks are being executed. In other cases the task won't fail even if we have additional background load.
 
 ![Just 1GB files](images/gb.png "Just 1GB files")
-Opposed to the previuos results, the performance related to just big files is very poor 
+Opposed to the previuos results, the performance related to just big files is very poor, both in latency terms (the average latency is about 1 minute and 30 seconds, which is not acceptable) and in requests per second. The reason for this low performance could be the communication overhead between WSL and Fedora. 
