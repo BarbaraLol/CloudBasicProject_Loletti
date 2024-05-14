@@ -22,7 +22,6 @@ volumes:
   db:
 
 services:
-
   db:
     image: postgres:latest
     container_name: db
@@ -76,4 +75,68 @@ services:
     depends_on:
       - nextcloud
 ```
-
+### Docker compose file breakdown
+In this section the docker compose file is analyzed in all its components:
+* The PostgressSQL, used to perfomr the database management operations,
+  ```yaml
+  db:
+    image: postgres:latest
+    container_name: db
+    environment:
+      - POSTGRES_USER=nextcloud
+      - POSTGRES_PASSWORD=nextcloud
+      - POSTGRES_DB=nextcloud
+    restart: always
+    volumes:
+      - db:/var/lib/mysql
+  ```
+* Redis
+  ```yaml
+   redis:
+    image: redis:alpine
+    container_name: redis
+  ```
+* Nextcloud
+```yaml
+ nextcloud:
+    image: nextcloud:latest
+    container_name: nextcloud
+    depends_on:
+      - db
+    volumes:
+      - nextcloud:/var/www/html
+    environment:
+      - POSTGRES_HOST=db
+      - NEXTCLOUD_ADMIN_USER=admin
+      - NEXTCLOUD_ADMIN_PASSWORD=admin
+      - POSTGRES_USER=nextcloud
+      - POSTGRES_PASSWORD=nextcloud
+      - POSTGRES_DB=nextcloud
+```
+* locust
+```yaml
+locust:
+    image: locustio/locust
+    container_name: locust
+    ports:
+      - "8089:8089"
+    volumes:
+      - ./locust:/mnt/
+    command: -f /mnt/locustfile.py --host http://nextcloud:80 --users 10 --spawn-rate 1 -t 5m
+    depends_on:
+      - nginx
+```
+* nginx
+```yaml
+  nginx:
+    image: nginx:latest
+    container_name: nginx
+    links:
+      - nextcloud
+    ports:
+      - 8080:80
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - nextcloud
+```
