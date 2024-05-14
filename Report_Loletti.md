@@ -289,3 +289,15 @@ wait
 # Output completion message
 echo "All users deleted."
 ```
+### Additional steps
+In order to grant Locust load tester unrestricted access some security measures have been brought down, such as the ones thos of Nextcloud and Nginx. This result has been accomplished by running the following commands:
+```powershell
+docker exec --user www-data nextcloud php /var/www/html/occ config:system:set trusted_domains 2 --value=nextcloud
+docker exec --user www-data nextcloud_instance php /var/www/html/occ config:system:set trusted_domains 3 --value=nginx
+```
+Also the `congif.php` which can be found inside the `./config` directory in the host filesystem has been modified by adding the following two lines
+```php
+'ratelimit.protection.enabled' => false,
+'filelocking.enabled' => false,
+```
+This passage is cructial for the tests to succede: applying this modifications the test, when performed, won't be seen as attacks and therfore their connections won't be blocked and, at the same time, the files will also be accessible. 
