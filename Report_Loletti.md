@@ -104,7 +104,7 @@ volumes:
     image: redis:alpine
     container_name: redis
   ```
-* nextcloud: using the latest version of ne
+* nextcloud: the docker image used is the latest version of Nextcloud and it depends on the 'db' service. The volume is mounted to the container's '/var/www/html/' directory. Reguarding the environment, its variables are set, including the database host, the admin username, the password and obviously the database name. The Nextcloud container depends ont he db one
 ```yaml
  nextcloud:
     image: nextcloud:latest
@@ -121,7 +121,7 @@ volumes:
       - POSTGRES_PASSWORD=nextcloud
       - POSTGRES_DB=nextcloud
 ```
-* locust
+* locust: this container is used specifically to generate load on the Nextcloud instance. Due to its testing purposes, its requires some extra care in order to allow it to work properly. It will be necessary to deactivate some security measures inside the nextcloud instance as well as to create a locustfile.py script, which will be analyzed later. The port used to access the Locust web interface is the 8089 and the volume corresponds to a local directory './locust' mounted to the container's '/mnt/' directory. Also the default values for the host on which to perform the load tests, the number of users, the spawn rate and the duration for conducting the tests are defined. The locust container is configured to depend on the Nginx container.
 ```yaml
 locust:
     image: locustio/locust
@@ -134,7 +134,7 @@ locust:
     depends_on:
       - nginx
 ```
-* nginx
+* nginx: The Nginx container depends on the Nextcloud instance, as reported in 'depends_on', and its link is connected to the Nextcloud one, as specified in 'links'. The port used its the 8089. Its configuration requires a special configuration file, 'nginx.conf', which will be analyzed later.
 ```yaml
   nginx:
     image: nginx:latest
