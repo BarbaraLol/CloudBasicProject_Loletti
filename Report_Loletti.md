@@ -307,5 +307,5 @@ Each of the tests have been performed using 40 users by selecting, throught a ma
 * when for every user one file for every type is uploaded
 * each user choose to upload a 1GB file
 The summary graphs are reported below
-![Mixed load](Images/mixed.png "Mixed load")
-![Just 1GB files](Images/gb.png "Just 1GB files")
+![Mixed load](mixed.png "Mixed load")
+![Just 1GB files](gb.png "Just 1GB files")
