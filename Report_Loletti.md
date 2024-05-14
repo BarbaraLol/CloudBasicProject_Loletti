@@ -301,3 +301,9 @@ Also the `congif.php` which can be found inside the `./config` directory in the 
 'filelocking.enabled' => false,
 ```
 This passage is cructial for the tests to succede: applying this modifications the test, when performed, won't be seen as attacks and therfore their connections won't be blocked and, at the same time, the files will also be accessible. 
+
+### Results
+Each of the tests have been performed using 40 users by selecting, throught a manual modification of the locustfile.py code, the two cases which would produce the most load:
+* when for every user one file for every type is uploaded
+* each user choose to upload a 1GB file
+The summary graphs are reported below
