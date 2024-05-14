@@ -152,7 +152,8 @@ locust:
 The configuration of Nginx is handled by both the docker-compose.yaml and the nginx.conf files. 
 The nginx.conf file's code is reported below and it specifies the http configuration, which can be divided into the following blocks:
 * the upstream block defines how the backend behaves by implementing a load balancing algorithm (`least_conn`, which handle new requests sending them to the server with the fewest active connections) and the address and port of the upstream server that Nginx will proxy requests to, meaning our Nextcloud instance
-*   
+* the log format block has the task to gather inside the logs informations about incoming requests and upstream server responses. This process is not strictly necessary but it can be of help during a possible debugging process
+* the server block has in itself the main definition of the Nginx server configuration specifying which port to listen on, the reverse proxy (with `location`) and other connection parameters
 ```php
 upstream nextcloud_backend {
         least_conn;
@@ -191,6 +192,8 @@ upstream nextcloud_backend {
 ```
 ## Load testing procedure
 ### locustfile.py
+As said before, the Locust container requires a locust configuration file, locustfile.py, which contains precise instructions abput what the Locust instance should be able to do and know. The code is reported below.
+It defines the users credential and some testing tasks whinch in this case consist on the uploading of a text file and some dummy files of different sizes (1 kB, 1MB and 1GB). Also, for cleaning purposes, part of the test consists on deleting the file after every upload.
 ```python
 import random
 from locust import HttpUser, task, between
@@ -239,4 +242,50 @@ class NextcloudUser(HttpUser):
         with open("/mnt/file_1mb", "rb") as file:
             self.client.put(remote_path, data=file, auth=self.auth)
             # self.client.delete(remote_path, data=file, auth=self.auth)
+```
+
+### Users generation and deletion
+In order to speed up the process of creation and deletion of users of the Nextcloud instance, two different scripts have been implemented so to authomatize the process:
+* for users creation
+```powershell
+#!/bin/bash
+
+# Define base user name and password
+baseUserName="user"
+password="user_password123!"
+totalUsers=40
+
+# Loop to create each user
+for ((i=1; i<totalUsers; i++)); do
+    userName="${baseUserName}${i}"
+    # Run the Docker command in the background
+    docker exec -e OC_PASS=$password --user www-data nextcloud /var/www/html/occ user:add --password-from-env $userName &
+done
+
+# Wait for all background jobs to complete
+wait
+
+# Output completion message
+echo "All users created."
+```
+* for deletion and clean up purposes
+```powershell
+#!/bin/bash
+
+# Define base user name
+baseUserName="user"
+totalUsers=40
+
+# Loop to delete each user
+for ((i=1; i<totalUsers; i++)); do
+    userName="${baseUserName}${i}"
+    # Run the Docker command in the background
+    docker exec --user www-data nextcloud php /var/www/html/occ user:delete $userName &
+done
+
+# Wait for all background jobs to complete
+wait
+
+# Output completion message
+echo "All users deleted."
 ```
