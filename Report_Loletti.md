@@ -77,8 +77,16 @@ services:
 ```
 ### Docker compose file breakdown
 In this section the docker compose file is analyzed in all its components:
-* The PostgressSQL, used to perfomr the database management operations,
-  ```yaml
+* the first part is used to specify the version of the Docker compose used and to define the name of the volumes used for persisten storage
+```yaml
+version: '3.8'
+
+volumes:
+  nextcloud:
+  db:
+```
+* db: it's the name of the volume containing PostgressSQL, used to perfomr the database management operations. The container has been configured with a user, password and a database name. Also, a restarting policy has beeing defined and the volume mounted in a specific directory inside the host machine.
+```yaml
   db:
     image: postgres:latest
     container_name: db
@@ -90,13 +98,13 @@ In this section the docker compose file is analyzed in all its components:
     volumes:
       - db:/var/lib/mysql
   ```
-* Redis
-  ```yaml
+* redis: creates the Redis container used for caching in Nextcloud. 
+```yaml
    redis:
     image: redis:alpine
     container_name: redis
   ```
-* Nextcloud
+* nextcloud: using the latest version of ne
 ```yaml
  nextcloud:
     image: nextcloud:latest
