@@ -104,7 +104,7 @@ volumes:
     image: redis:alpine
     container_name: redis
   ```
-* nextcloud: the docker image used is the latest version of Nextcloud and it depends on the 'db' service. The volume is mounted to the container's '/var/www/html/' directory. Reguarding the environment, its variables are set, including the database host, the admin username, the password and obviously the database name. The Nextcloud container depends ont he db one
+* nextcloud: the docker image used is the latest version of Nextcloud and it depends on the `db` service. The volume is mounted to the container's `/var/www/html/` directory. Reguarding the environment, its variables are set, including the database host, the admin username, the password and obviously the database name. The Nextcloud container depends ont he db one
 ```yaml
  nextcloud:
     image: nextcloud:latest
@@ -121,7 +121,7 @@ volumes:
       - POSTGRES_PASSWORD=nextcloud
       - POSTGRES_DB=nextcloud
 ```
-* locust: this container is used specifically to generate load on the Nextcloud instance. Due to its testing purposes, its requires some extra care in order to allow it to work properly. It will be necessary to deactivate some security measures inside the nextcloud instance as well as to create a locustfile.py script, which will be analyzed later. The port used to access the Locust web interface is the 8089 and the volume corresponds to a local directory './locust' mounted to the container's '/mnt/' directory. Also the default values for the host on which to perform the load tests, the number of users, the spawn rate and the duration for conducting the tests are defined. The locust container is configured to depend on the Nginx container.
+* locust: this container is used specifically to generate load on the Nextcloud instance. Due to its testing purposes, its requires some extra care in order to allow it to work properly. It will be necessary to deactivate some security measures inside the nextcloud instance as well as to create a locustfile.py script, which will be analyzed later. The port used to access the Locust web interface is the 8089 and the volume corresponds to a local directory `./locust` mounted to the container's `/mnt/` directory. Also the default values for the host on which to perform the load tests, the number of users, the spawn rate and the duration for conducting the tests are defined. The locust container is configured to depend on the Nginx container.
 ```yaml
 locust:
     image: locustio/locust
@@ -134,7 +134,7 @@ locust:
     depends_on:
       - nginx
 ```
-* nginx: The Nginx container depends on the Nextcloud instance, as reported in 'depends_on', and its link is connected to the Nextcloud one, as specified in 'links'. The port used its the 8089. Its configuration requires a special configuration file, 'nginx.conf', which will be analyzed later.
+* nginx: The Nginx container depends on the Nextcloud instance, as reported in `depends_on`, and its link is connected to the Nextcloud one, as specified in `links`. The port used its the 8089. Its configuration requires a special configuration file, `nginx.conf`, which will be analyzed later.
 ```yaml
   nginx:
     image: nginx:latest
@@ -150,7 +150,9 @@ locust:
 ```
 ## Nginx configuration file
 The configuration of Nginx is handled by both the docker-compose.yaml and the nginx.conf files. 
-The nginx.conf configuartion file's code are reported below
+The nginx.conf file's code is reported below and it specifies the http configuration, which can be divided into the following blocks:
+* the upstream block defines how the backend behaves by implementing a load balancing algorithm (`least_conn`, which handle new requests sending them to the server with the fewest active connections) and the address and port of the upstream server that Nginx will proxy requests to, meaning our Nextcloud instance
+*   
 ```php
 upstream nextcloud_backend {
         least_conn;
@@ -190,38 +192,51 @@ upstream nextcloud_backend {
 ## Load testing procedure
 ### locustfile.py
 ```python
-upstream nextcloud_backend {
-        least_conn;
-        server nextcloud:80;
-    }
+import random
+from locust import HttpUser, task, between
+from requests.auth import HTTPBasicAuth
+import os
 
-    # Define the log format with upstream information
-    log_format upstreamlog '$remote_addr - $remote_user [$time_local] "$request" '
-                           'upstream_response_time $upstream_response_time msec $msec request_time $request_time '
-                           'upstream_addr $upstream_addr upstream_status $upstream_status';
+class NextcloudUser(HttpUser):
+    auth = None
+    user_name = None
+    wait_time = between(2, 5)
+    print("Current working directory:", os.getcwd())
 
-    server {
-        listen 80;
-        server_name localhost;
+    # users to test this with.
+    def on_start(self):
+        user_idx = random.randrange(1, 10)
+        self.user_name = f'user{user_idx}'
+        self.auth = HTTPBasicAuth(self.user_name, "user_password123!")
+    
+    # Upload txt files
+    @task(10)
+    def upload_file_text(self):
+        with open("/mnt/test_locust_file.txt", "rb") as file:
+            self.client.put(f"/remote.php/dav/files/{self.user_name}/test_locust_file.txt", data=file, auth=self.auth)
+            self.client.delete(f"/remote.php/dav/files/{self.user_name}/test_locust_file.txt", data=file, auth=self.auth)
+    
+    # Upload big files
+    @task(5)
+    def upload_file_1gb(self):
+        remote_path = f"/remote.php/dav/files/{self.user_name}/1gb_file_{random.randrange(0, 10)}"
+        with open("/mnt/file_1gb", "rb") as file:
+            self.client.put(remote_path, data=file, auth=self.auth)
+            self.client.delete(remote_path, data=file, auth=self.auth)
 
-        # Use the defined log format for access logs
-        access_log /var/log/nginx/access.log upstreamlog;
+    # Upload small files
+    @task(10)
+    def upload_file_1kb(self):
+        remote_path = f"/remote.php/dav/files/{self.user_name}/1kb_file_{random.randrange(0, 10)}" #
+        with open("/mnt/file_1kb", "rb") as file:
+            self.client.put(remote_path, data=file, auth=self.auth)
+            self.client.delete(remote_path, data=file, auth=self.auth)
 
-        location / {
-            proxy_pass http://nextcloud_backend;
-            proxy_set_header Host $host;
-            proxy_set_header X-Real-IP $remote_addr;
-            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-            proxy_set_header X-Forwarded-Proto $scheme;
-            client_max_body_size 0; # Zero means no limit
-        }
-
-        # Nginx status page configuration
-        location /nginx_status {
-            stub_status on;
-            allow 127.0.0.1;        # Only allow access from localhost
-            allow 172.23.0.0/16;    # Allow access from the Docker network
-            deny all;               # Deny access to anyone else
-        }
-    }
+    Upload medium files
+    @task(10)
+    def upload_file_1mb(self):
+        remote_path = f"/remote.php/dav/files/{self.user_name}/1mb_file_{random.randrange(0, 10)}" #
+        with open("/mnt/file_1mb", "rb") as file:
+            self.client.put(remote_path, data=file, auth=self.auth)
+            # self.client.delete(remote_path, data=file, auth=self.auth)
 ```
