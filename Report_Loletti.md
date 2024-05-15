@@ -4,11 +4,14 @@
 
 ## Introduction 
 In order to complete this project Docker containers have been used to run instances of Nextcloud and Locust, utilized to perform load testings. Other than that more containers have been created to run, respectively, Redis to implemnt caching, Nginx to perform load balancing, Postgres to menage a database.
+
 The system has been implemented so that the users are provided with the possibility to log in and out the platform thanks to the modul Register, which can be installed and integrated to Nextcloud with its native GUI.
+
 By default, when being created, it is possible to assign different roles to each for a new user, such as admin, simple user or a guest. If needed it is aslo possible to define more roles throught the user management functionality.
+
 Each user has its own private storage space, which can be directly accessed by them or by directly accessing to Nextcloud and locating the specific directory. Obviously, depending on the context, this can be considered either a feature or a vulnerability, In this latter case, we could mitigate this risk by activating the built-in encryption method, which allows the admins to access all the files and at the same time prevents the content to be read by everyone but the owner of them. Upload and storage space can be limited for each user.
 
-By properly configuring the Nginx and Redis instances, the project can be run on different machines 
+By properly configuring the Nginx and Redis instances, the project can be run on different machines. The platform used to develop this project is Docker Engine running in a Fedora 39 machine equiped with an AMD Ryzen 5 5500U processor (6 cores and 3,6GHz), 16GB of DDR4 memory and a 250GB NVMe SSD.
 ..........
 
 ## Deployment
