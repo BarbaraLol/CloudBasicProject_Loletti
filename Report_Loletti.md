@@ -14,8 +14,6 @@ This possibility can be seen either as a feature, that enables the administrator
 
 By properly configuring the Nginx and Redis instances, the project can be run on different machines. The platform used to develop this project is Docker Engine running in a Fedora 39 machine equiped with an AMD Ryzen 5 5500U processor (6 cores and 3,6GHz), 16GB of DDR4 memory and a 250GB NVMe SSD.
 
-Monitoring and mantain
-
 ## Deployment
 ### Docker Compose file
 Right after having started Docker, the whole file-storage project can be deployed by running the following docker-compose.yaml file. Its purpose is to create the correct directories where the required volumes for the containers will be sotred.
