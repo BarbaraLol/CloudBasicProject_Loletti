@@ -5,14 +5,12 @@
 ## Introduction 
 In order to complete this project Docker containers have been used to run instances of Nextcloud and Locust, utilized to perform load testings. Other than that more containers have been created to run, respectively, Redis to implemnt caching, Nginx to perform load balancing, Postgres to menage a database.
 
-The system has been implemented so that the users are provided with the possibility to log in and out the platform thanks to the modul Register, which can be installed and integrated to Nextcloud with its native GUI.
+The system has been implemented so that the users are provided with the possibility to sign in, log in and out the platform thanks to the modul Register, which can be installed and integrated to Nextcloud with its native GUI.
 
 By default, when being created, it is possible to assign different roles to each for a new user, such as admin, simple user or a guest. If needed it is aslo possible to define more roles throught the user management functionality.
 
-After being created, each user has access to their own private storage space and it can only be accessed by them or directly by locating inside the machine the directories associeted with the user that. 
-This possibility can be seen both as a feature, that enables the administrators to better control the system and how its services are used, and as a vulnerability depending on the contex we are in. In the latter case, the issue can be mitigated by the activation of some built-in encyprion methods, which keeps the files accessible to just the admins and their owner as well as the possibility to encrypt them so to saftely share them with other users. It is also possible to define the maximum size for uploadable file and storage limits for each user
-
-Each user has its own private storage space, which can be directly accessed by them or by directly accessing to Nextcloud and locating the specific directory. Obviously, depending on the context, this can be considered either a feature or a vulnerability, In this latter case, we could mitigate this risk by activating the built-in encryption method, which allows the admins to access all the files and at the same time prevents the content to be read by everyone but the owner of them. Upload and storage space can be limited for each user.
+After being created, each user has access to their own private storage space and it can only be accessed by them or directly by locating the directories associeted with the user inside the machine. 
+This possibility can be seen either as a feature, that enables the administrators to better control the system and how its services are used, or as a vulnerability depending on the contex we are in. In the latter case, the issue can be mitigated by the activation of some built-in encyprion methods, which keeps the files accessible to just the admins and their owner as well as the possibility to encrypt the said files so to saftely share them with other users. It is also possible to define the maximum size for uploadable file and storage limits for each user.
 
 By properly configuring the Nginx and Redis instances, the project can be run on different machines. The platform used to develop this project is Docker Engine running in a Fedora 39 machine equiped with an AMD Ryzen 5 5500U processor (6 cores and 3,6GHz), 16GB of DDR4 memory and a 250GB NVMe SSD.
 
@@ -84,7 +82,7 @@ services:
 ```
 ### Docker compose file breakdown
 In this section the docker compose file is analyzed in all its components:
-* the first part is used to specify the version of the Docker compose used and to define the name of the volumes used for persisten storage
+* the very first part is used to specify the version of the Docker compose used and to define the name of the volumes used for persisten storage
 ```yaml
 version: '3.8'
 
@@ -92,7 +90,7 @@ volumes:
   nextcloud:
   db:
 ```
-* db: it's the name of the volume containing PostgressSQL, used to perfomr the database management operations. The container has been configured with a user, password and a database name. Also, a restarting policy has beeing defined and the volume mounted in a specific directory inside the host machine.
+* db: it's the name of the volume containing PostgresSQL, used to perfomr the database management operations. The container has been configured with a user, password and a database name. Also, a restarting policy has beeing defined and the volume mounted in a specific directory inside the host machine.
 ```yaml
   db:
     image: postgres:latest
@@ -111,7 +109,7 @@ volumes:
     image: redis:alpine
     container_name: redis
   ```
-* nextcloud: the docker image used is the latest version of Nextcloud and it depends on the `db` service. The volume is mounted to the container's `/var/www/html/` directory. Reguarding the environment, its variables are set, including the database host, the admin username, the password and obviously the database name. The Nextcloud container depends ont he db one
+* nextcloud: the docker image used is the latest version of Nextcloud and it depends on the `db` service. The volume is mounted to the container's `/var/www/html/` directory. Reguarding the environment, its variables are set, including the database host, the admin username, the password and obviously the database name. The Nextcloud container depends ont the db one
 ```yaml
  nextcloud:
     image: nextcloud:latest
@@ -141,7 +139,7 @@ locust:
     depends_on:
       - nginx
 ```
-* nginx: The Nginx container depends on the Nextcloud instance, as reported in `depends_on`, and its link is connected to the Nextcloud one, as specified in `links`. The port used its the 8089. Its configuration requires a special configuration file, `nginx.conf`, which will be analyzed later.
+* nginx: The Nginx container depends on the Nextcloud instance, as reported in `depends_on`, and it is connected to the Nextcloud one, as specified in `links`. The port used its the 8089. Its configuration requires a special configuration file, `nginx.conf`, which will be analyzed later.
 ```yaml
   nginx:
     image: nginx:latest
@@ -156,10 +154,11 @@ locust:
       - nextcloud
 ```
 ## Nginx configuration file
-The configuration of Nginx is handled by both the docker-compose.yaml and the nginx.conf files. 
+The configuration of Nginx is handled by both the docker-compose.yaml and the `nginx.conf` files. 
+
 The nginx.conf file's code is reported below and it specifies the http configuration, which can be divided into the following blocks:
-* the upstream block defines how the backend behaves by implementing a load balancing algorithm (`least_conn`, which handle new requests sending them to the server with the fewest active connections) and the address and port of the upstream server that Nginx will proxy requests to, meaning our Nextcloud instance
-* the log format block has the task to gather inside the logs informations about incoming requests and upstream server responses. This process is not strictly necessary but it can be of help during a possible debugging process
+* the upstream block defines how the backend behaves by implementing a load balancing algorithm (`least_conn`, which handle new requests sending them to the server with the fewest active connections) and the address and port of the upstream server that Nginx will proxy requests to, meaning our Nextcloud instance.
+* the log format block has the task to gather inside the logs informations about incoming requests and upstream server responses. This process is not strictly necessary but it can be helpful during a possible debugging process
 * the server block has in itself the main definition of the Nginx server configuration specifying which port to listen on, the reverse proxy (with `location`) and other connection parameters
 ```php
 upstream nextcloud_backend {
@@ -199,7 +198,8 @@ upstream nextcloud_backend {
 ```
 ## Load testing procedure
 ### locustfile.py
-As said before, the Locust container requires a locust configuration file, locustfile.py, which contains precise instructions abput what the Locust instance should be able to do and know. The code is reported below.
+As said before, the Locust container requires a locust configuration file, `locustfile.py`, which contains precise instructions about what the Locust instance should be able to do and know. The code is reported below.
+
 It defines the users credential and some testing tasks whinch in this case consist on the uploading of a text file and some dummy files of different sizes (1 kB, 1MB and 1GB). Also, for cleaning purposes, part of the test consists on deleting the file after every upload.
 ```python
 import random
@@ -310,7 +310,7 @@ Also the `congif.php` which can be found inside the `./config` directory in the 
 This passage is cructial for the tests to succede: applying this modifications the test, when performed, won't be seen as attacks and therfore their connections won't be blocked and, at the same time, the files will also be accessible. 
 
 ### Results
-Each of the tests have been performed using 40 users by selecting, throught a manual modification of the locustfile.py code, the two cases which would produce the most load:
+Each of the tests have been performed using 40 users by selecting, throught a manual modification of the locustfile.py code, the following three cases:
 * when for every user one file for every type is uploaded
 * each user upload 1kB and 1MB files
 * each user choose to upload a 1GB file
@@ -320,8 +320,8 @@ The summary graphs are reported below
 
 ![Mixed 1kB 1MB load](images/mixed_1kb_1mb.png "Mixed 1kB and 1MB load")
 
-The graphs reports that, even if some occasional failures happens, the system performance can be said to be the same for the first two cases. The log reports all the failures but the search for their causes can be preatty complicated. It is supposed that some of them may happen when some background task starts at the same time while some of them will fail even though no other tasks are being executed. In other cases the task won't fail even if we have additional background load.
+The graphs report that, even if some occasional failures happens, the system performance can be said to be the same for the first two cases. The log reports all the failures but the search for their causes can be preatty complicated. It is supposed that some of them may happen when some background task starts at the same time, while some of them will fail even though no other tasks are being executed. In other cases the task won't fail even if we have additional background load.
 
 ![Just 1GB files](images/gb.png "Just 1GB files")
 
-Opposed to the previuos results, the performance related to just big files is very poor, both in latency terms (the average latency is about 1 minute and 30 seconds, which is not acceptable) and in requests per second. The reason for this low performance could be the communication overhead between WSL and Fedora. 
+Opposed to the previuos results, the performance related to just big files is very poor, both in latency terms (the average latency is about 1 minute and 30 seconds, which is not acceptable) and in requests per second. The reason for this low performance could be the communication overhead between Docker Engine and Fedora. 
