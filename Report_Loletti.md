@@ -9,10 +9,14 @@ The system has been implemented so that the users are provided with the possibil
 
 By default, when being created, it is possible to assign different roles to each for a new user, such as admin, simple user or a guest. If needed it is aslo possible to define more roles throught the user management functionality.
 
+After being created, each user has access to their own private storage space and it can only be accessed by them or directly by locating inside the machine the directories associeted with the user that. 
+This possibility can be seen both as a feature, that enables the administrators to better control the system and how its services are used, and as a vulnerability depending on the contex we are in. In the latter case, the issue can be mitigated by the activation of some built-in encyprion methods, which keeps the files accessible to just the admins and their owner as well as the possibility to encrypt them so to saftely share them with other users. It is also possible to define the maximum size for uploadable file and storage limits for each user
+
 Each user has its own private storage space, which can be directly accessed by them or by directly accessing to Nextcloud and locating the specific directory. Obviously, depending on the context, this can be considered either a feature or a vulnerability, In this latter case, we could mitigate this risk by activating the built-in encryption method, which allows the admins to access all the files and at the same time prevents the content to be read by everyone but the owner of them. Upload and storage space can be limited for each user.
 
 By properly configuring the Nginx and Redis instances, the project can be run on different machines. The platform used to develop this project is Docker Engine running in a Fedora 39 machine equiped with an AMD Ryzen 5 5500U processor (6 cores and 3,6GHz), 16GB of DDR4 memory and a 250GB NVMe SSD.
-..........
+
+Monitoring and mantain
 
 ## Deployment
 ### Docker Compose file
