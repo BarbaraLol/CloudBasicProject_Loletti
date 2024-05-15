@@ -107,7 +107,7 @@ volumes:
     image: redis:alpine
     container_name: redis
   ```
-* nextcloud: the docker image used is the latest version of Nextcloud and it depends on the `db` service. The volume is mounted to the container's `/var/www/html/` directory. Reguarding the environment, its variables are set, including the database host, the admin username, the password and obviously the database name. The Nextcloud container depends ont the db one
+* nextcloud: the docker image used is the latest version of Nextcloud and it depends on the `db` service. The volume is mounted to the container's `/var/www/html/` directory. Reguarding the environment, its variables are set, including the database host, the admin username, the password and obviously the database name. The Nextcloud container depends on the db one
 ```yaml
  nextcloud:
     image: nextcloud:latest
@@ -198,7 +198,7 @@ upstream nextcloud_backend {
 ### locustfile.py
 As said before, the Locust container requires a locust configuration file, `locustfile.py`, which contains precise instructions about what the Locust instance should be able to do and know. The code is reported below.
 
-It defines the users credential and some testing tasks whinch in this case consist on the uploading of a text file and some dummy files of different sizes (1 kB, 1MB and 1GB). Also, for cleaning purposes, part of the test consists on deleting the file after every upload.
+It defines the users credential and some testing tasks which in this case consist on the uploading of a text file and some dummy files of different sizes (1 kB, 1MB and 1GB). Also, for cleaning purposes, part of the test consists on deleting the file after every upload.
 ```python
 import random
 from locust import HttpUser, task, between
@@ -295,7 +295,7 @@ wait
 echo "All users deleted."
 ```
 ### Additional steps
-In order to grant Locust load tester unrestricted access some security measures have been brought down, such as the ones thos of Nextcloud and Nginx. This result has been accomplished by running the following commands:
+In order to grant Locust load tester unrestricted access some security measures have been brought down, such as the ones of Nextcloud and Nginx. This result has been accomplished by running the following commands:
 ```powershell
 docker exec --user www-data nextcloud php /var/www/html/occ config:system:set trusted_domains 2 --value=nextcloud
 docker exec --user www-data nextcloud_instance php /var/www/html/occ config:system:set trusted_domains 3 --value=nginx
@@ -318,7 +318,7 @@ The summary graphs are reported below
 
 ![Mixed 1kB 1MB load](images/mixed_1kb_1mb.png "Mixed 1kB and 1MB load")
 
-The graphs report that, even if some occasional failures happens, the system performance can be said to be the same for the first two cases. The log reports all the failures but the search for their causes can be preatty complicated. It is supposed that some of them may happen when some background task starts at the same time, while some of them will fail even though no other tasks are being executed. In other cases the task won't fail even if we have additional background load.
+The graphs report that, even if some occasional failures happens, the system performance can be said to be the same for the first two cases. The log reports all the failures but the search for their causes can be pretty complicated. It is supposed that some of them may happen when some background task starts at the same time, while some of them will fail even though no other tasks are being executed. In other cases the task won't fail even if we have additional background load.
 
 ![Just 1GB files](images/gb.png "Just 1GB files")
 
