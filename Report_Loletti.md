@@ -1,7 +1,5 @@
 # Cloud Basic Assignment Report
 
-#taffoni e ruggero
-
 ## Introduction 
 In order to complete this project Docker containers have been used to run instances of Nextcloud and Locust, utilized to perform load testings. Other than that more containers have been created to run, respectively, Redis to implemnt caching, Nginx to perform load balancing, Postgres to menage a database.
 
